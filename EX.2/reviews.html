@@ -1,0 +1,148 @@
+<html>
+<head>
+    <title>jQuery</title>
+    <style>
+        .add-review {
+            width: 400px;
+        }
+
+        .add-review input:first-of-type,
+        .add-review textarea {
+            width: 100%;
+            margin-bottom: 10px;
+            padding: 10px;
+        }
+
+        .reviews ul {
+            list-style-type: none;
+            padding-left: 0;
+        }
+
+        .reviews li {
+            display: block;
+            width: 600px;
+            border: 1px solid red;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+
+        .reviews li.approved {
+            border-color: green;
+        }
+
+        .reviews li p {
+            font-size: 18px;
+            font-weight: 600;
+            margin: 0;
+            margin: 10px 0;
+        }
+
+        .reviews li div {
+            font-size: 14px;
+            margin: 10px 0;
+        }
+    </style>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <script>
+        function renderReviews() {
+            $('#reviews').empty();
+            $.ajax({
+                url: 'http://localhost:3000/reviews',
+                type: 'GET',
+                success: function(reviews) {
+                    var $ul = $('<ul />');
+
+                    reviews.forEach(function(review) {
+                        var $li = $('<li />');
+                        var $p = $('<p />', {
+                            text: review.name,
+                        });
+                        var $div = $('<div />', {
+                            text: review.message,
+                            text: review.message,
+                        });
+                        if (review.approve == 1) {
+                            $li.addClass('approved');
+                        }
+                        var $button = $('<button />', {
+                            text: 'Approve',
+                            class: 'approve',
+                            'data-id': review.id,
+                        });
+                        var $remove = $('<button />', {
+                            text: 'Delete',
+                            class: 'delete',
+                            'data-id': review.id,
+                        });
+                        $li.append($p, $div, $button, $remove);
+                        $ul.append($li);
+                    });
+                    $('#reviews').append($ul);
+                }
+            });
+        }
+
+        (function($) {
+            $(function() {
+                renderReviews();
+
+                $('#reviews').on('click', '.delete', function() {
+                    var review = $(this).data();
+
+                    $.ajax({
+                        url: 'http://localhost:3000/reviews/' + review.id,
+                        type: 'DELETE',
+                        success: function() {
+                            renderReviews();
+                        }
+                    })
+                });
+
+                $('#reviews').on('click', '.approve', function() {
+                    var review = $(this).data();
+
+                    $.ajax({
+                        url: 'http://localhost:3000/reviews/' + review.id,
+                        type: 'PATCH',
+                        data: { approve: 1 },
+                        success: function() {
+                            renderReviews();
+                        }
+                    })
+                });
+
+                $('#add-review').on('click', '.send', function (event) {
+                    var review = {
+                        name: $(this).closest('#add-review').find('#name').val(),
+                        message: $(this).closest('#add-review').find('#message').val(),
+                        approve: 0,
+                    };
+
+                    $.ajax({
+                        url: 'http://localhost:3000/reviews',
+                        type: 'POST',
+                        data: review,
+                        success: function() {
+                            renderReviews();
+                        }
+                    });
+
+                    event.preventDefault();
+                })
+            });
+        })(jQuery);
+    </script>
+</head>
+<body>
+<div id="goods"></div>
+<div>
+    <form class="add-review" id="add-review">
+        <input type="text" name="name" id="name" placeholder="Name">
+        <textarea name="message" id="message" cols="30" rows="10" placeholder="Message"></textarea>
+        <input type="submit" value="Send" class="send">
+    </form>
+    <h3>Reviews</h3>
+    <div class="reviews" id="reviews"></div>
+</div>
+</body>
+</html>
